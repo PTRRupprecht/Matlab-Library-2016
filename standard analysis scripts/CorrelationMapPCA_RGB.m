@@ -27,7 +27,7 @@ imagesc(abs(D),[0 1]); axis off equal; %colormap(cmap)
 x = 1:900;
 AA(:,1) = zeros(900,1); AA(140:190,1) = 1;
 AA(:,2) = zeros(900,1); AA(1:120,2) = 1;
-AA(:,3) = zeros(900,1); AA(150:618,3) = 1;
+AA(:,3) = zeros(900,1); AA(150:618,3) = 1; 
 figure(99), plot(AA)
  
 for k = 1:3
