@@ -83,7 +83,7 @@ end
 
 % LL = zeros(size(movie_AVG_X{pp}));
 for pp = 1:nb_planes
-    movie_AVG_X{pp} = mean(movie_p{pp}(:,:,400:1000),3);
+    movie_AVG_X{pp} = mean(movie_p{pp}(:,:,200:800),3);
 %     movie_AVG_X{pp} = movie_AVG_X{pp} - template;
 % LL =  LL+ movie_AVG_X{pp};
 end
@@ -111,7 +111,7 @@ for pp = 1:5
     df_scale = [-10 200];
     last_ii = 1;
     % extract cellular time traces . semi-automated ROI-detection
-    ROI_map_input = ROI_mapXX{pp};
+    ROI_map_input = zeros(size(movie_p{pp}(:,:,1)));%   ROI_mapXX{pp};
     [ROI_mapX,timetracesX,timetracesX_raw] = timetraces_singleplane(movie_p{pp},movie_AVG_X{pp},offset,DF_reponse{pp},DF_master{pp},localCorrelations{pp},df_scale,ROI_map_input,meta,last_ii,movie_AVG_X{pp});
     % figure, imagesc(conv2(timetracesX,fspecial('gaussian',[25 1],23),'same'));
     ROI_map_input = ROI_mapX;
