@@ -19,7 +19,7 @@ for j = 1:size(movie,3)
     subpixelCorrection = (log(cross_template(C0max-1))-log(cross_template(C0max+1))) / (log(cross_template(C0max-1)) + log(cross_template(C0max+1)) - 2*log(cross_template(C0max))) / 2;
     a = C0max + subpixelCorrection;
     [~,C0max] = max(cross_template2);
-    subpixelCorrection = (log(cross_template2(C0max-1))-log(cross_template2(C0max+1))) / (log(cross_template2(C0max-1)) + log(cross_template2(C0max+1)) - 2*log(cross_template2(C0max))) / 2;
+    subpixelCorrection = (log(C0(C0max-1))-log(C0(C0max+1))) / (log(C0(C0max-1)) + log(C0(C0max+1)) - 2*log(C0(C0max))) / 2;
     b = C0max + subpixelCorrection;
     temp(j) = b-a; 
 end
