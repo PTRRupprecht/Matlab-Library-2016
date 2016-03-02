@@ -1,38 +1,31 @@
 clear all
 global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
-% load list of files
-% cd distorted
-FileList_0 = dir('Fish1_odor1His_001*_.tif');
-% cd ..
-FileList = FileList_0;%dir('OB_4planes_paradigm1*_undistorted.tif');
-FileListX = FileList;
-% for k = 1:numel(FileList)
-%     FileList(k) = FileListX(numel(FileList)+1-k);
-% end
-% cd distorted
-% read metadata
+
+%% load list of files
+FileList_0 = dir('Fish1_odor1His_00*_.tif');
+FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
-% cd ..
 for kkk = 1:numel(FileList)
     L{kkk} = imfinfo(FileList(kkk).name);
     meta.height = L{kkk}(1).Height;
     meta.width = L{kkk}(1).Width;
     meta.numberframes(kkk) = numel(L{kkk});
 end
-% initialize 3D matrix
-binning = 1;
 
+
+%% read raw data from hard disk
+binning = 1;
 meta.framerate = meta.framerate/binning;
 nb_frames_total = sum(floor(meta.numberframes/binning));
-clear movie movie_p
-useful_range_start = 1;
+clear movie movie_p counter_planes
+useful_range_start = 200;
 
-nb_planes = 1;
+nb_planes = 4;
 meta.framerate = meta.framerate/nb_planes;
 nb_frames_perplane = floor(nb_frames_total/nb_planes);
-for pp = 1:nb_planes
+for pp = 2 % which plane do you want to choose right now?
     counter_planes{pp} = 0;
     movie_p{pp} = zeros(meta.height,meta.width,nb_frames_perplane);
     for kkk = 1:numel(FileList)
@@ -48,71 +41,82 @@ for pp = 1:nb_planes
         [movie_p{pp}(:,:,((counter_planes{pp}+1):(counter_planes{pp}+nb_frames_this_time))),movie_AVG_X{kkk,pp}] = read_movie(FileList(kkk).name,meta.width,meta.height,nb_frames_this_time,startingpoint,binning,L{kkk},nb_planes);
         counter_planes{pp} = counter_planes{pp} + nb_frames_this_time;
     end
-    
-    
-    % discard einschwingvorgang
-    movie_p{pp} = movie_p{pp}(:,:,useful_range_start:end);
-    % align movie intra-trial
-    reference{pp} = mean(movie_p{pp}(:,:,(-200:200) + round(nb_frames_total/2/nb_planes)),3);
-    [movie_p{pp},offsety_resolved,offsetx_resolved] = alginWithinTrial(movie_p{pp},reference{pp});
-    movie_AVG_X{pp} = mean(movie_p{pp},3);
-    % check alignment visually
-    % implay(movie_p{1}(:,:,1:20:end)/max(movie_p{1}(:)))
-    % estimate offset of PMTs
-    offset = quantile(movie_AVG_X{1}(:),0.02);
-    % dF over F
 end
 
-% correct for DAQ board transient
-% template = zeros(size(movie_p{pp}(:,:,1)));
-% for pp = 1:nb_planes
-%     dummy = mean(movie_p{pp}(:,:,1:end),3);
-%     t1 =  nanmean(dummy(1:2:end,:),1);
-%     t2 = nanmean(dummy(2:2:end,:),1);
-%     template(1:2:end,:) = template(1:2:end,:) + repmat(  t1  , [size(template,2)/2 1]);
-%     template(1:2:end,:) = template(1:2:end,:) + repmat( t2(end:-1:1)  , [size(template,2)/2 1]);
-%     template(2:2:end,:) = template(2:2:end,:) +  repmat(t2 , [size(template,2)/2 1]);
-%     template(2:2:end,:) = template(2:2:end,:) +  repmat( t1(end:-1:1), [size(template,2)/2 1]);
-%     imagesc(template)
-% end
-% template = template/nb_planes/2;
-% 
-% for pp = 1:nb_planes
-%     movie_pX{pp} = movie_p{pp} - repmat(template,[1 1 size(movie_p{pp},3)]);
-% end
-
-% LL = zeros(size(movie_AVG_X{pp}));
-for pp = 1:nb_planes
-    movie_AVG_X{pp} = mean(movie_p{pp}(:,:,200:800),3);
-%     movie_AVG_X{pp} = movie_AVG_X{pp} - template;
-% LL =  LL+ movie_AVG_X{pp};
+%% subtract preamp ringing
+template_window = [];
+for k = 1:8; template_window = [template_window; [1:25]'+400*(k-1)]; end
+template = mean(movie_p{pp}(:,:,template_window),3);
+template_odd = mean(template(1:2:end,:),1);
+template_even = mean(template(2:2:end,:),1);
+for k = 1:size(template,2)/2
+    template(2*k-1,:) = template_odd;
+    template(2*k,:) = template_even;
+end
+for k = 1:size(movie_p{pp},3)
+    movie_p{pp}(:,:,k) = movie_p{pp}(:,:,k) - template;
 end
 
-for pp = 1:nb_planes
-    plot1 = 34; plot2 = 0; DF_movie_yesno = 0; % figure number
-    [DF_reponse{pp},DF_master{pp},DF_movie] = dFoverF(movie_p{pp},offset,meta.framerate,plot1,plot2,DF_movie_yesno);
-    drawnow;
-    % local correlation map (computational slightly expensive, but good
-    % alternative to dF over F map; movie has to be 2^x for width and height
+% unwarp full stack
+movie_p{pp} = unwarp_precision(movie_p{pp});
+
+%% AVG images
+clear AVG
+for k = 1:8
+    AVG(:,:,k) = mean(movie_p{pp}(:,:,(51:400)+(k-1)*400),3);
+    result_conv =fftshift(real(ifft2(conj(fft2(AVG(:,:,k))).*fft2(AVG(:,:,1)))));
+    [y,x] = find(result_conv==max(result_conv(:))); %Find the 255 peak
+    result_conv =fftshift(real(ifft2(conj(fft2(AVG(:,:,1))).*fft2(AVG(:,:,1)))));
+    [y0,x0] = find(result_conv==max(result_conv(:))); %Find the 255 peak
+    offsety(k) = y-y0;
+    offsetx(k) = x-x0;
+end
+
+
+%% treat each trial separately
+% odor switches at frame 100
+figure(854); hold on;
+for trial_nb = 1:8
+    movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
+    AVG_movie(:,:,trial_nb) = mean(movie_trial,3);
+
+    % calculate activity maps
+    offset = -30;
+    f0_window = [1 100];
+    response_window = [118 150];
+    plot1 = 0; plot2 = 0; DF_movie_yesno = 0; % figure number
+    [DF_reponse(:,:,trial_nb),DF_master(:,:,trial_nb),DF_movie] = dFoverF(movie_trial,offset,meta.framerate,plot1,plot2,DF_movie_yesno,f0_window,response_window);
+    % local correlation map (computational slightly expensive, but helpful)
     tilesize = 16;
-    localCorrelations{pp} = localCorrelationMap(movie_p{pp},tilesize);
-    % localCorrelations = zeros(size(DF_reponse));
+    localCorrelations(:,:,trial_nb) = localCorrelationMap(movie_trial,tilesize);
+
+    subplot(2,4,trial_nb); imagesc(DF_reponse(:,:,trial_nb),[-0.5 2])
+%     subplot(2,4,trial_nb); imagesc(AVG_movie(:,:,trial_nb),[-30 70])
 end
 
-figure(88);
-colormap(paruly)
-for pp = 1:5
-    anatomy{pp} = undistort_stack(mean(movie_p{pp}(:,:,1:end),3),meta.zoom);
-    subplot(1,5,pp); imagesc(anatomy{pp},[8400 8700]); axis off equal; colormap(gray)
-end
+%% preliminary ROIs got from two trials
+ROI_map_input = zeros(size(AVG_movie(:,:,1)));
+trial_nb = 3;
+offset = -30;
+movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
+df_scale = [-20 100];
+AVG_Z = AVG_movie(:,:,trial_nb);
+AVG_Z(AVG_Z>80) = 80;
 
+[ROI_mapX(trial_nb,:,:),timetracesX,timetracesX_raw] = timetraces_singleplane(movie_trial,AVG_Z,offset,DF_reponse(:,:,trial_nb),DF_master(:,:,trial_nb),localCorrelations(:,:,trial_nb),df_scale,ROI_map_input,meta,1,AVG_Z);
+% figure, imagesc(conv2(timetracesX,fspecial('gaussian',[25 1],23),'same'));
+ROI_map_input = squeeze(ROI_mapX(trial_nb,:,:));
+
+
+
+%% old stuff
 for pp = 1:5
    
     df_scale = [-10 200];
     last_ii = 1;
     % extract cellular time traces . semi-automated ROI-detection
     ROI_map_input = zeros(size(movie_p{pp}(:,:,1)));%   ROI_mapXX{pp};
-    [ROI_mapX,timetracesX,timetracesX_raw] = timetraces_singleplane(movie_p{pp},movie_AVG_X{pp},offset,DF_reponse{pp},DF_master{pp},localCorrelations{pp},df_scale,ROI_map_input,meta,last_ii,movie_AVG_X{pp});
+    [ROI_mapX(trial_nb),timetracesX,timetracesX_raw] = timetraces_singleplane(movie_p{pp},movie_AVG_X{pp},offset,DF_reponse{pp},DF_master{pp},localCorrelations{pp},df_scale,ROI_map_input,meta,last_ii,movie_AVG_X{pp});
     % figure, imagesc(conv2(timetracesX,fspecial('gaussian',[25 1],23),'same'));
     ROI_map_input = ROI_mapX;
 

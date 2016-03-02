@@ -1,10 +1,10 @@
 % calculate dFoverF for a response window and for a moving window, taking
 % the maximum response for each location
-function [DF_reponse,DF_master,DF_movie] = dFoverF(movie,offset,framerate,plot1,plot2,DF_movie_yesno)
+function [DF_reponse,DF_master,DF_movie] = dFoverF(movie,offset,framerate,plot1,plot2,DF_movie_yesno,f0_window,response_window)
 
 % figure(66), plot(squeeze(mean(mean(movie,2),1)))
 % xy = ginput(4);
-xy = [ 1 0; 200 0; 366 0; 546 0];
+xy = [ f0_window(1) 0; f0_window(2) 0; response_window(1) 0; response_window(2) 0];
 
 F0_window = round(xy(1,1)):round(xy(2,1));
 response_window = round(xy(3,1)):round(xy(4,1));
@@ -26,7 +26,7 @@ DF = mean(movie(:,:,response_window),3);
 F0 = mean(movie(:,:,F0_window),3);
 F0 = conv2(F0,fspecial('gaussian',[3 3], 2),'same');
 DF = (DF - F0)./(F0-offset);
-DF_reponse = conv2(DF,fspecial('gaussian',[5 5], 2),'same');
+DF_reponse = conv2(DF,fspecial('gaussian',[3 3], 2),'same');
 if plot1 ~=0; figure(plot1), imagesc(DF_reponse*100,[-5 130]); colormap(jet); axis equal off; end
 drawnow;
 DF_master = zeros(size(movie,1),size(movie,2));
@@ -44,7 +44,7 @@ if plot2 ~= 0; figure(plot2), imagesc(DF_master*100,[-5 130]); colormap(jet); ax
  
 if DF_movie_yesno
     F0 = mean(movie(:,:,F0_window),3);
-    F0 = conv2(F0,fspecial('gaussian',[5 5], 2),'same');
+    F0 = conv2(F0,fspecial('gaussian',[3 5], 3),'same');
     DF_movie = (movie - repmat(F0,[1 1 size(movie,3)]))./(repmat(F0,[1 1 size(movie,3)]) - offset);
 else
     DF_movie = [];

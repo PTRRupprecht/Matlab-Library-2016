@@ -1,4 +1,4 @@
-function [movie,offsety_resolved,offsetx_resolved] = alginWithinTrial_revised(movie,reference)
+function [movie,offsety_resolved,offsetx_resolved] = alginWithinTrial(movie,reference)
 
 A = reference;
 

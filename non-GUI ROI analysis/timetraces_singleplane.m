@@ -20,8 +20,9 @@ function [ROI_mapX,timetracesX,timetracesX_raw] = timetraces_singleplane(movie,m
     scaling = 1.0;
     mappe_X = ROI_map(:,:);
     mappe_X(mappe_X > 0) = 1;
-    AVG_X = movie_AVG(:,:,1)/max(max(movie_AVG(:,:,1)));
-    AVG_X = imadjust(AVG_X);
+    AVG_X = movie_AVG(:,:,1) - min(min(movie_AVG(:,:,1)));
+    AVG_X = AVG_X/max(AVG_X(:));
+%     AVG_X = imadjust(movie_AVG(:,:,1));
     AVG_X = adapthisteq(AVG_X,'NumTiles',[16 16]);
     RGBimage = zeros(size(movie_AVG,1),size(movie_AVG,2),3);
     RGBimage(:,:,1) = AVG_X*scaling; RGBimage(:,:,2) = AVG_X*scaling; RGBimage(:,:,3) = AVG_X*scaling;
