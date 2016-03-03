@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_odor1His_00*_.tif');
+FileList_0 = dir('Fish1_dim_odor1_Arg_00*_.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
@@ -25,7 +25,7 @@ useful_range_start = 200;
 nb_planes = 4;
 meta.framerate = meta.framerate/nb_planes;
 nb_frames_perplane = floor(nb_frames_total/nb_planes);
-for pp = 2 % which plane do you want to choose right now?
+for pp = 1 % which plane do you want to choose right now?
     counter_planes{pp} = 0;
     movie_p{pp} = zeros(meta.height,meta.width,nb_frames_perplane);
     for kkk = 1:numel(FileList)
@@ -88,16 +88,16 @@ for trial_nb = 1:8
     [DF_reponse(:,:,trial_nb),DF_master(:,:,trial_nb),DF_movie] = dFoverF(movie_trial,offset,meta.framerate,plot1,plot2,DF_movie_yesno,f0_window,response_window);
     % local correlation map (computational slightly expensive, but helpful)
     tilesize = 16;
-    localCorrelations(:,:,trial_nb) = localCorrelationMap(movie_trial,tilesize);
+%     localCorrelations(:,:,trial_nb) = localCorrelationMap(movie_trial,tilesize);
 
     subplot(2,4,trial_nb); imagesc(DF_reponse(:,:,trial_nb),[-0.5 2])
 %     subplot(2,4,trial_nb); imagesc(AVG_movie(:,:,trial_nb),[-30 70])
 end
 
-%% preliminary ROIs got from two trials
+%% preliminary ROIs got from test trials
 ROI_map_input = zeros(size(AVG_movie(:,:,1)));
-trial_nb = 3;
-offset = -30;
+trial_nb = 8;
+offset = -25;
 movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
 df_scale = [-20 100];
 AVG_Z = AVG_movie(:,:,trial_nb);
@@ -107,42 +107,26 @@ AVG_Z(AVG_Z>80) = 80;
 % figure, imagesc(conv2(timetracesX,fspecial('gaussian',[25 1],23),'same'));
 ROI_map_input = squeeze(ROI_mapX(trial_nb,:,:));
 
+%% final ROIs, selected by comparing with all 8 trials in imageJ
 
-
-%% old stuff
-for pp = 1:5
-   
-    df_scale = [-10 200];
-    last_ii = 1;
-    % extract cellular time traces . semi-automated ROI-detection
-    ROI_map_input = zeros(size(movie_p{pp}(:,:,1)));%   ROI_mapXX{pp};
-    [ROI_mapX(trial_nb),timetracesX,timetracesX_raw] = timetraces_singleplane(movie_p{pp},movie_AVG_X{pp},offset,DF_reponse{pp},DF_master{pp},localCorrelations{pp},df_scale,ROI_map_input,meta,last_ii,movie_AVG_X{pp});
-    % figure, imagesc(conv2(timetracesX,fspecial('gaussian',[25 1],23),'same'));
-    ROI_map_input = ROI_mapX;
-
-    ROI_mapXX{pp} = ROI_mapX;
-    timetracesX_X{pp} = timetracesX;
-    timetracesX_X_raw{pp} = timetracesX_raw;
-
-    [size(timetracesX_X_raw{1},2), size(timetracesX_X_raw{2},2), size(timetracesX_X_raw{3},2),size(timetracesX_X_raw{4},2),size(timetracesX_X_raw{5},2)]
-    sum([size(timetracesX_X_raw{1},2), size(timetracesX_X_raw{2},2), size(timetracesX_X_raw{3},2),size(timetracesX_X_raw{4},2),size(timetracesX_X_raw{5},2)])
+for trial_nb = 1:8
+    offset = -25;
+    movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
+    df_scale = [-20 100];
+    AVG_Z = AVG_movie(:,:,trial_nb);
+    AVG_Z(AVG_Z>80) = 80;
+    [ROI_mapX(trial_nb,:,:),timetracesX,timetracesX_raw] = timetraces_singleplane(movie_trial,AVG_Z,offset,DF_reponse(:,:,trial_nb),DF_master(:,:,trial_nb),localCorrelations(:,:,trial_nb),df_scale,ROI_map_input,meta,1,AVG_Z);
+    timetracesX(:,:,trial_nb) = timetracesX;
+    timetracesX_raw(:,:,trial_nb) = timetracesX_raw;
 end
 
-figure(811);
-colormap(lines)
-for pp = 1:5
-    ROI_mapXXZ{pp} = undistort_stack_integers(ROI_mapXX{pp},meta.zoom);
-    subplot(5,1,pp); imagesc(ROI_mapXXZ{pp}); axis off equal; colormap(lines)
-end
+plane{pp}.ROI_map = ROI_mapX;
+plane{pp}.timetraces = timetracesX;
+plane{pp}.timetraces_raw = timetracesX_raw;
+plane{pp}.DF_reponse = DF_reponse;
+plane{pp}.meta = meta;
+plane{pp}.anatomy = AVG_movie;
 
-% fullX =     [(timetracesX_X_raw{1}), (timetracesX_X_raw{2}), (timetracesX_X_raw{3}),(timetracesX_X_raw{4}),(timetracesX_X_raw{5})]; 
 
-DP_total.ROI_mapXX = ROI_mapXX;
-DP_total.timetracesX_X = timetracesX_X;
-DP_total.timetracesX_X_raw = timetracesX_X_raw;
-DP_total.anatomy = anatomy;
-DP_total.DF_reponse = DF_reponse;
-DP_total.DF_master = DF_master;
-DP_total.localCorrelations = localCorrelations;
-save(strcat(FileList(1).name(1:end-4),'_timetrace.mat'),'DP_total','meta','offset');
+save(strcat('Extracted_Data_fish_01-03-16_Lys.mat'),'plane');
 
