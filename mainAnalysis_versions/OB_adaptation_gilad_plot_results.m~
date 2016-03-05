@@ -31,16 +31,13 @@ for yy = 1:numel(MatFileList)
         subplot(ceil(size(fluoXT,2)/floor(sqrt(size(fluoXT,2)))),floor(sqrt(size(fluoXT,2))),trailx); imagesc((1:351)/7.5,[],squeeze(fluoXT(:,trailx,:))',[0 200]);
         title(strcat('Plane',32,num2str(planesIX(trailx)),', neuron',32,num2str(planesIXX(trailx))));
     end
-    set(gcf, 'WindowKeyPressFcn', {@OB_adaptiation_gilad_plot_results_callback,planesIX,planesIXX});
-    
-    
-    set(h, 'ButtonDownFcn', @OB_adaptiation_gilad_plot_results_callback)
     figure(19319); plane_nb = 1; neuron_nb = 4;
     ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
     [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
     xxx = max(1,x-40):min(512,x+40); yyy = max(1,y-40):min(477,y+40);
     subplot(3,4,1); imagesc(ROIX==neuron_nb);
     for zz = 1:8; subplot(3,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
+    set(h, 'ButtonDownFcn', @mycallbackfcn)
 end
 
 
