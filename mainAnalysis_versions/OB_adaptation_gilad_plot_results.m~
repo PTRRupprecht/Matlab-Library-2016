@@ -21,26 +21,56 @@ for yy = 1:numel(MatFileList)
         end
         fluoXT(:,:,trailx) = fluoX;
     end
-    figure(3838);
-    subplot(1,numel(MatFileList),yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
+    figure(3238);
+    subplot(1,1,yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
 %     for trailx = 1:size(fluoXT,3)
 %         subplot(3,size(fluoXT,3),trailx + (yy-1)*8); imagesc((1:351)/7.5,[],mean(fluoXT(:,:,trailx),3)',[0 200]);
 %     end
-    figure(1818+yy); 
+    figure(1218+yy); 
     for trailx = 1:size(fluoXT,2)
         subplot(ceil(size(fluoXT,2)/floor(sqrt(size(fluoXT,2)))),floor(sqrt(size(fluoXT,2))),trailx); imagesc((1:351)/7.5,[],squeeze(fluoXT(:,trailx,:))',[0 200]);
         title(strcat('Plane',32,num2str(planesIX(trailx)),', neuron',32,num2str(planesIXX(trailx))));
     end
     
-%     figure(19319); plane_nb = 1; neuron_nb = 10;
-%     ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
-%     [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
-%     xxx = max(1,x-40):min(512,x+40); yyy = max(1,y-40):min(477,y+40);
-%     ROIXX = ROIX(xxx,yyy);
-%     subplot(3,4,1); imagesc(ROIXX==neuron_nb);
-%     for zz = 1:10; subplot(3,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
+    figure(12319); plane_nb = 3; neuron_nb = 3;
+    windowsize = 20;
+    ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
+    [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
+    xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
+    ROIXX = ROIX(xxx,yyy);
+    subplot(3,4,1); imagesc(ROIXX==neuron_nb);
+    for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
+    for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.DF_reponse(xxx,yyy,zz),[-0.5 2]); end; colormap(jet)
 
 end
+
+
+
+% discard neurons
+
+p_ix = [1 1 1 1 1 1 1 2 2 2 2 3 4 4 4 4 4 4 4 4 4 4 4];
+n_ix = [1 2 3 4 5 6 7 4 5 7 8 2 1:11];
+
+t_ix = [4 10 11];
+
+planeX = plane;
+for j = 1:numel(p_ix)
+    j
+    planeX{p_ix(j)}.ROI_map(planeX{p_ix(j)}.ROI_map == n_ix(j)) = 0;
+    planeX{p_ix(j)}.timetraces_raw(:,n_ix(j),:) = NaN;
+    planeX{p_ix(j)}.timetraces(:,n_ix(j),:) = NaN;
+end
+for k = 1:4
+    planeX{k}.timetraces(:,:,t_ix) = [];
+    planeX{k}.timetraces_raw(:,:,t_ix) = [];
+    planeX{k}.meta.numberframes(t_ix) = [];
+    planeX{k}.ROI_map(t_ix,:,:) = [];
+    planeX{k}.DF_reponse(:,:,t_ix) = [];
+    planeX{k}.anatomy(:,:,t_ix) = [];
+end
+plane_03_03_Arg = planeX;
+
+save('Fish4_03_03_Arg.mat','plane_03_03_Arg')
 
 
 
