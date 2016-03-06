@@ -74,6 +74,37 @@ save('Fish5_03_03_His.mat','plane_04_03_His')
 
 
 
+
+FileLischt = dir('Fish*.mat');
+for j = 1:numel(FileLischt)
+    j = j + 1
+    F = load(FileLischt(j).name);
+    keyboard
+    if 0
+        plane = F.plane_04_03_His
+    end
+    for i = 1:4
+        plane{i}.timetraces(:,(size(plane{i}.timetraces_raw,2)+1):end,:) = [];
+    end
+%     timecourse = [];
+%     for i = 1:4
+%     timecourse = [timecourse,(nanmean(plane{i}.timetraces,3))];
+%     end
+%     timecourse = nanmean(nanstd(plane{i}.timetraces,0,3),2);
+%     figure(88); plot((timecourse))
+%     figure(88); imagesc(squeeze(timecourse))
+    save(strcat(FileLischt(j).name(1:end-4),'X.mat'),'plane');
+end
+
+
+    
+    
+        if size(plane{i}.timetraces,2)
+    
+    timecourse = 
+
+
+
 % figure(24);
 % for jj = 1:4
 %     fluotrace = plane{jj}.timetraces_raw;

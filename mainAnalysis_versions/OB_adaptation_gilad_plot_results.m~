@@ -32,7 +32,7 @@ for yy = 1:numel(MatFileList)
         title(strcat('Plane',32,num2str(planesIX(trailx)),', neuron',32,num2str(planesIXX(trailx))));
     end
     
-    figure(12319); plane_nb = 3; neuron_nb = 3;
+    figure(12319); plane_nb = 1; neuron_nb = 5;
     windowsize = 20;
     ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
     [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
@@ -48,10 +48,10 @@ end
 
 % discard neurons
 
-p_ix = [1 1 1 1 1 1 1 2 2 2 2 3 4 4 4 4 4 4 4 4 4 4 4];
-n_ix = [1 2 3 4 5 6 7 4 5 7 8 2 1:11];
+p_ix = [];
+n_ix = [];
 
-t_ix = [4 10 11];
+t_ix = [9 10];
 
 planeX = plane;
 for j = 1:numel(p_ix)
@@ -68,9 +68,40 @@ for k = 1:4
     planeX{k}.DF_reponse(:,:,t_ix) = [];
     planeX{k}.anatomy(:,:,t_ix) = [];
 end
-plane_03_03_Arg = planeX;
+plane_04_03_His = planeX;
 
-save('Fish4_03_03_Arg.mat','plane_03_03_Arg')
+save('Fish5_03_03_His.mat','plane_04_03_His')
+
+
+
+
+FileLischt = dir('Fish*.mat');
+for j = 1:numel(FileLischt)
+    j = j + 1
+    F = load(FileLischt(j).name);
+    keyboard
+    if 0
+        plane = F.plane_02_29_Arg
+    end
+    for i = 1:4
+        plane{i}.timetraces(:,(size(plane{i}.timetraces_raw,2)+1):end,:) = [];
+    end
+%     timecourse = [];
+%     for i = 1:4
+%     timecourse = [timecourse,(nanmean(plane{i}.timetraces,3))];
+%     end
+%     timecourse = nanmean(nanstd(plane{i}.timetraces,0,3),2);
+%     figure(88); plot((timecourse))
+%     figure(88); imagesc(squeeze(timecourse))
+    save(strcat(FileLischt(j).name(1:end-4),'X.mat'),'plane');
+end
+
+
+    
+    
+        if size(plane{i}.timetraces,2)
+    
+    timecourse = 
 
 
 
