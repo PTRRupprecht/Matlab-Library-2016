@@ -1,5 +1,5 @@
 
-MatFileList = dir('Extracted*.mat');
+MatFileList = dir('Fish*X.mat');
 for yy = 1:numel(MatFileList)
     load(MatFileList(yy).name);
     clear fluoXT fluoX
@@ -21,28 +21,37 @@ for yy = 1:numel(MatFileList)
         end
         fluoXT(:,:,trailx) = fluoX;
     end
-    figure(3238);
-    subplot(1,1,yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
+%     figure(3238);
+%     subplot(1,1,yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
 %     for trailx = 1:size(fluoXT,3)
 %         subplot(3,size(fluoXT,3),trailx + (yy-1)*8); imagesc((1:351)/7.5,[],mean(fluoXT(:,:,trailx),3)',[0 200]);
 %     end
-    figure(1218+yy); 
+    figure(1218+yy);
+%     figure(1299); 
     for trailx = 1:size(fluoXT,2)
         subplot(ceil(size(fluoXT,2)/floor(sqrt(size(fluoXT,2)))),floor(sqrt(size(fluoXT,2))),trailx); imagesc((1:351)/7.5,[],squeeze(fluoXT(:,trailx,:))',[0 200]);
         title(strcat('Plane',32,num2str(planesIX(trailx)),', neuron',32,num2str(planesIXX(trailx))));
     end
     
-    figure(12319); plane_nb = 1; neuron_nb = 5;
-    windowsize = 20;
-    ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
-    [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
-    xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
-    ROIXX = ROIX(xxx,yyy);
-    subplot(3,4,1); imagesc(ROIXX==neuron_nb);
-    for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
-    for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.DF_reponse(xxx,yyy,zz),[-0.5 2]); end; colormap(jet)
+%     figure(12319); plane_nb = 2; neuron_nb = 16;
+%     windowsize = 20;
+%     ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
+%     [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
+%     xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
+%     ROIXX = ROIX(xxx,yyy);
+%     subplot(3,4,1); imagesc(ROIXX==neuron_nb);
+%     for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
+%     for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.DF_reponse(xxx,yyy,zz),[-0.5 2]); end; colormap(jet)
 
 end
+
+
+
+
+
+
+
+
 
 
 
