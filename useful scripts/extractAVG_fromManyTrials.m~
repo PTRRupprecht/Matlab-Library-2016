@@ -29,3 +29,12 @@ for jj = 1 3%:numel(FileX)
     end
 end
 
+L{kkk} = imfinfo('FishX_odourXArg_001_.tif');
+tic
+X = read_movie('FishX_odourXArg_001_.tif',512,512,numel(L{kkk}),1,1,L{kkk},1);
+toc
+L{kkk} = imfinfo('FishX_odourXArg_002_.tif');
+tic
+X = read_movieLX('FishX_odourXArg_002_.tif',512,512,numel(L{kkk}),1,1,L{kkk},1);
+toc
+
