@@ -1,6 +1,6 @@
 
 MatFileList = dir('Fish*X.mat');
-for yy = 1:numel(MatFileList)
+for yy = 3%numel(MatFileList)
     load(MatFileList(yy).name);
     clear fluoXT fluoX
     for trailx = 1:size(plane{1}.timetraces,3)
