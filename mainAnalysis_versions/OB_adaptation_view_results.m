@@ -3,7 +3,7 @@
 % - one subplot per neuron with 8 repetitions
 % - one figure per experiment
 
-MatFileList = dir('Fish*X.mat');
+MatFileList = dir('Fish*.mat');
 % for all 7 experiments
 for yy = 1:numel(MatFileList)
     load(MatFileList(yy).name);
