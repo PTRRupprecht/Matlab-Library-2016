@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_odor2Lys_0*_.tif');
+FileList_0 = dir('Fish1_odor1Arg_0*_.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
@@ -132,5 +132,5 @@ plane{pp}.meta = meta;
 plane{pp}.anatomy = AVG_movie;
 
 
-save(strcat('Extracted_Data_fish1_04-03-16_His.mat'),'plane');
+save(strcat('Extracted_Data_fish1_15-03-16_Arg.mat'),'plane');
 
