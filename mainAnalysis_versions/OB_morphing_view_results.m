@@ -2,86 +2,77 @@
 
 MatFileList = dir('Extracted*.mat');
 load(MatFileList(1).name);
-clear fluoXT fluoX
-for trailx = 1:numel(plane{1}.timetraces)
-    fluoX = [];
-    planesIX = [];
-    planesIXX = [];
-    for jj = 1:numel(plane)
-        fluotrace = plane{jj}.timetraces_raw;
-        indizes = find(~isnan(sum(fluotrace(:,:,1),1)));
-        fluotrace = fluotrace(:,indizes,:);
-        for kk = 1:size(fluotrace,2)
-            ftrace = smooth(fluotrace(:,kk,trailx),25); F0 = min(ftrace(25:end-25));
-            fluotraceX = (fluotrace(:,kk,trailx) - F0)/F0*100;
-            fluoX = [fluoX, smooth(fluotraceX,5)];
-            planesIX = [planesIX,jj];
-            planesIXX = [planesIXX,indizes(kk)];
-        end
-    end
-    fluoXT(:,:,trailx) = fluoX;
+
+pdgLUT{1} = paradigm10Hz.p301; pdgLUT{2} = paradigm10Hz.p302;
+pdgLUT{3} = paradigm10Hz.p32; pdgLUT{4} = paradigm10Hz.p32;
+pdgLUT{5} = paradigm10Hz.p42; pdgLUT{6} = paradigm10Hz.p42;
+nb_trials = size(plane{1}.anatomy,3);
+smoothing = 5;
+% find neuronal indizes
+for j = 1:4; n_ix{j} = find(~isnan(sum(plane{j}.timetraces_raw{1}))); end
+
+n_ix{2}
+
+all_anatomy = zeros(1024);
+all_anatomy(1:512,1:512) = plane{1}.anatomy(:,:,1);
+all_anatomy(513:1024,1:512) = plane{2}.anatomy(:,:,1);
+all_anatomy(1:512,513:1024) = plane{3}.anatomy(:,:,1);
+all_anatomy(513:1024,513:1024) = plane{4}.anatomy(:,:,1);
+
+all_anatomy(all_anatomy> quantile(all_anatomy(:),0.995)) = quantile(all_anatomy(:),0.995);
+
+
+
+
+figure(918), imagesc(all_anatomy)
+
+
+
+plane{1}.anatomy(:,:,1)
+
+
+
+scaling = 2.5;
+ROI_map_thresh = ROI_map; ROI_map_thresh(ROI_map_thresh>1) = 1;
+RGBimage(:,:,1) = AVG_X*scaling; RGBimage(:,:,2) = AVG_X*scaling; RGBimage(:,:,3) = AVG_X*scaling;
+RGBimage(:,:,2) = RGBimage(:,:,2) + ROI_map_thresh/scaling; RGBimage(:,:,1) = RGBimage(:,:,1) + ROI_map_thresh/scaling;
+maxVal = max(max(RGBimage(:,:,1))); RGBimage(:,:,1) = RGBimage(:,:,1)/maxVal; RGBimage(:,:,2) = RGBimage(:,:,2)/max(max(RGBimage(:,:,2))); RGBimage(:,:,3) = RGBimage(:,:,3)/maxVal; 
+
+set(handle1,'CData',RGBimage); caxis auto
+
+
+
+
+
+plane_nb = 1;
+neuron_nb = 2;
+
+figure(41);
+for k = 1:nb_trials
+    % plot paradigm
+    timestamps = (1:1900)/10;
+    ax(k) = subplot(3,nb_trials,k);
+    h = fill(timestamps,pdgLUT{k}(1:1900,1),'r');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
+    h = fill(timestamps,pdgLUT{k}(1:1900,2),'b');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+    axis([0 190 0 3])
+    hold off;
+    % plot response
+    ax(k+nb_trials) = subplot(3,nb_trials,k+nb_trials); plot((1:1425)/7.5+50/7.5,smooth(plane{plane_nb}.timetraces{k}(1:1425,neuron_nb),smoothing),'k');
+    axis([0 190 -10 205])
+    
+    % plot ROIs / neuron anatomy
+    windowsize = 30;
+    ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
+    [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
+    xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
+%     ROIXX = ROIX(xxx,yyy);
+    ax(k+2*nb_trials) = subplot(3,nb_trials,k+2*nb_trials); imagesc(plane{plane_nb}.anatomy(xxx,yyy,k),[-30 70]); colormap(gray)
+    title(FileNames(k).name,'Interpreter','None');
+%     drawnow;
 end
-figure(3238);
 
-subplot(1,1,yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
-
-subplot(1,numel(MatFileList),yy); imagesc(corr(squeeze(mean(fluoXT(104:148,1:end,:),1))),[0 1])
-%     for trailx = 1:size(fluoXT,3)
-%         subplot(3,size(fluoXT,3),trailx + (yy-1)*8); imagesc((1:351)/7.5,[],mean(fluoXT(:,:,trailx),3)',[0 200]);
-%     end
-figure(1218+yy);
-%     figure(1299); 
-for trailx = 1:size(fluoXT,2)
-    subplot(ceil(size(fluoXT,2)/floor(sqrt(size(fluoXT,2)))),floor(sqrt(size(fluoXT,2))),trailx); imagesc((1:351)/7.5,[],squeeze(fluoXT(:,trailx,:))',[0 200]);
-    title(strcat('Plane',32,num2str(planesIX(trailx)),', neuron',32,num2str(planesIXX(trailx))));
-end
-
-figure(12319); plane_nb = 4; neuron_nb = 6;
-windowsize = 30;
-ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
-[x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
-xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
-ROIXX = ROIX(xxx,yyy);
-subplot(4,4,1); imagesc(ROIXX==neuron_nb);
-for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(4,4,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
-for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(4,4,1+zz); imagesc(plane{plane_nb}.DF_reponse(xxx,yyy,zz),[-0.5 2]); end; colormap(jet)
-subplot(3,5,1); imagesc(ROIXX==neuron_nb);
-for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,5,1+zz); imagesc(plane{plane_nb}.anatomy(xxx,yyy,zz),[-30 70]); end; colormap(gray)
-%     for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(3,4,1+zz); imagesc(plane{plane_nb}.DF_reponse(xxx,yyy,zz),[-0.5 2]); end; colormap(jet)
-
-
-
-
-
-
-% discard neurons
-
-% p_ix = [1];
-% n_ix = [11];
-% 
-% t_ix = [9 10 11 12];
-% 
-% planeX = plane;
-% for j = 1:numel(p_ix)
-%     j
-%     planeX{p_ix(j)}.ROI_map(planeX{p_ix(j)}.ROI_map == n_ix(j)) = 0;
-%     planeX{p_ix(j)}.timetraces_raw(:,n_ix(j),:) = NaN;
-%     planeX{p_ix(j)}.timetraces(:,n_ix(j),:) = NaN;
-%     planeX{p_ix(j)}.timetraces(:,n_ix(j),:) = NaN;
-% end
-% for k = 1:4
-%     planeX{k}.timetraces(:,:,t_ix) = [];
-%     max_timetrace = size(planeX{k}.timetraces_raw(:,:,t_ix),2);
-%     planeX{k}.timetraces(:,(max_timetrace+1):end,:) = [];
-%     planeX{k}.timetraces_raw(:,:,t_ix) = [];
-%     planeX{k}.meta.numberframes(t_ix) = [];
-%     planeX{k}.ROI_map(t_ix,:,:) = [];
-%     planeX{k}.DF_reponse(:,:,t_ix) = [];
-%     planeX{k}.anatomy(:,:,t_ix) = [];
-% end
-% plane_04_03_His = planeX;
-% 
-% save('Fish2_15_03_Trp.mat','plane')
 
 
 

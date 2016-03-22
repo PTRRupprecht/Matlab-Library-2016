@@ -23,7 +23,6 @@ meta.framerate = meta.framerate/nb_planes;
 nb_frames_total = sum(floor(meta.numberframes/binning));
 
 clear movie movie_p counter_planes
-useful_range_start = 200;
 nb_frames_perplane = floor(nb_frames_total/nb_planes);
 for pp = 4 % which plane do you want to choose right now?
     counter_planes{pp} = 0;
