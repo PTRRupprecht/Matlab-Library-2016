@@ -29,10 +29,10 @@ movieL = zeros(size(movie));
 for j = 1:size(movie,3)
     for o = 1:size(movie,1)/2
         movieL((o-1)*2+2,:,j) = circshift(movie((o-1)*2+2,:,j),[0 0]);
-        movieL((o-1)*2+1,:,j) = circshift(movie((o-1)*2+1,:,j),[0 round(mean(temp))]);
+        movieL((o-1)*2+1,:,j) = circshift(movie((o-1)*2+1,:,j),[0 round(median(temp))]);
     end
 end
-disp(strcat('Mean change:',12,num2str(mean(temp)),12,'Std change:',12,num2str(std(temp))));
+disp(strcat('Median change:',12,num2str(median(temp)),12,'Std change:',12,num2str(std(temp))));
 
 end
            
