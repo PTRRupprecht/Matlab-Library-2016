@@ -98,7 +98,7 @@ akZoom('all_linked')
 
 %% preliminary ROIs got from test trials
 ROI_map_input = zeros(size(AVG_movie(:,:,1)));
-trial_nb = 5;
+trial_nb = 5; 
 offset = -25;
 movie_trial = circshift(movie_p{pp}(:,:,(50:meta.numberframes(trial_nb)/nb_planes)+sum(meta.numberframes(1:(trial_nb-1)))/nb_planes),[offsety(trial_nb) offsetx(trial_nb) 0]);
 df_scale = [-20 100];
@@ -131,5 +131,5 @@ plane{pp}.meta = meta;
 plane{pp}.anatomy = AVG_movie;
 
 
-save(strcat('Extracted_Data_fish1_02-04-16_morph_Trp_Phe.mat'),'plane');
+save(strcat('Extracted_Data_fish1_04-04-16_morph_Trp_Phe.mat'),'plane');
 
