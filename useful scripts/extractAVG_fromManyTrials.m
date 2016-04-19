@@ -1,10 +1,10 @@
 
 
 FileX = dir('16*morphing*Pdgm*');
-
+clear AVG
 for jj = 1:numel(FileX)
     cd(FileX(jj).name);
-    FileZ = dir('Fish1_*.tif');
+    FileZ = dir('Fish1D*.tif');
     for kkk = 1:numel(FileZ)
         jj
         kkk
@@ -22,7 +22,7 @@ end
 for jj = 1:2 %:numel(FileX)
     cd(FileX(jj).name);
     for pp = 1:4
-        filename = strcat('AVGs_plane',num2str(pp),'.tif');
+        filename = strcat('AVGs_plane_Fish1D',num2str(pp),'.tif');
         imwrite(uint16(squeeze(AVG(:,:,pp,1,jj))),filename);
         for kkk = 2:size(AVG,4)
             imwrite(uint16(squeeze(AVG(:,:,pp,kkk,jj))),filename,'WriteMode','append');
