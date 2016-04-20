@@ -16,7 +16,7 @@ function OB_morphing_selectROI_9x(~,event,parameters)
                 % plot paradigm
                 row_pos = floor(k/nb_x-0.001);
                 trial_timepoints = size(parameters.plane{plane_nb}.timetraces{k},1);
-                trial_timepoints2 = floor(trial_timepoints/7.5*100);
+                trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(k)},1));
                 ax(k) = subplot(nb_y,nb_x,k + row_pos*nb_x);
                 h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(k)}(1:10:trial_timepoints2,2); 0],'r');
                 set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;

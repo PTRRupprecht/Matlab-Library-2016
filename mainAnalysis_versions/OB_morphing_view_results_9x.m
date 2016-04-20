@@ -12,6 +12,7 @@ pdgLUT{1} = paradigm.p91; pdgLUT{2} = paradigm.p92;
 pdgLUT{3} = paradigm.p93; pdgLUT{4} = paradigm.p94;
 pdgLUT{5} = paradigm.p95; pdgLUT{6} = paradigm.p96;
 try; pdgLUT{7} = paradigm.p97; end
+try; pdgLUT{8} = paradigm.p98; end
 nb_trials = size(plane{1}.anatomy,3);
 smoothing = 5;
 
@@ -54,29 +55,29 @@ set(gcf, 'WindowKeyPressFcn', {@OB_morphing_selectROI_9x,parameters});
 
 
 % trial
-% figure(2)
-% tracesX = [];
-% for trx = 1:12
-%     x_length = size(plane{k}.timetraces{7},2);
-%     traces = [];
-%     for k = 1:4
-%         temp = plane{k}.timetraces{trx}(:,1:x_length);
-%         temp0 = plane{k}.timetraces{8}(:,1:x_length);
-%         idx = find(~isnan(sum(temp0)) & sum(temp0) ~= 0);
-%         traces = [traces, temp(:,idx)];
-%     end
-%     subplot(3,4,trx), imagesc((1:size(traces,1))/7.5+50/7.5,[],traces',[-40 400]);
+tracesX = [];
+for trx = 1:13
+    x_length = size(plane{1}.timetraces{7},2);
+    traces = [];
+    for k = 1:4
+        temp = plane{k}.timetraces{trx}(:,1:x_length);
+        temp0 = plane{k}.timetraces{8}(:,1:x_length);
+        idx = find(~isnan(sum(temp0)) & sum(temp0) ~= 0);
+        traces = [traces, temp(:,idx)];
+    end
+figure(2)
+    subplot(4,4,trx), imagesc((1:size(traces,1))/7.5+50/7.5,[],traces',[-40 400]);
 %     subplot(4,6,trx*2),imagesc(corr(traces'));
     
-%     tracesX = [tracesX; traces];
-%     trial_timepoints = size(parameters.plane{1}.timetraces{trx},1);
-%     trial_timepoints2 = floor(trial_timepoints/7.5*100);
-%     subplot(4,6,trx*2),  h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,2); 0],'r');
-%     set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
-%     h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,3); 0],'b');
-%     set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+figure(4)
+    trial_timepoints = size(parameters.plane{1}.timetraces{trx},1);
+    trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(trx)},1));
+    subplot(4,4,trx),  h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,2); 0],'r');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
+    h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,3); 0],'b');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
 
    
-% end
+end
 
 
