@@ -11,7 +11,7 @@ function OB_morphing_selectROI_9x(~,event,parameters)
             neuron_nb = parameters.all_ROI(y,x);
             figure(41);
             nb_y = 4;
-            nb_x = 8;
+            nb_x = 6;
             for k = 1:parameters.nb_trials
                 % plot paradigm
                 row_pos = floor(k/nb_x-0.001);

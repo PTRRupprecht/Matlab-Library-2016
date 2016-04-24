@@ -18,7 +18,7 @@ smoothing = 5;
 
 %% make anatomy clickable (RBG overlay image)
 all_anatomy = zeros(1024);
-select_trial = 5;
+select_trial = 1;
 all_anatomy(1:512,1:512) = plane{1}.anatomy(:,:,select_trial); all_ROI(1:512,1:512) = squeeze(plane{1}.ROI_map(select_trial,:,:));
 all_anatomy(513:1024,1:512) = plane{2}.anatomy(:,:,select_trial); all_ROI(513:1024,1:512) = squeeze(plane{2}.ROI_map(select_trial,:,:));
 all_anatomy(1:512,513:1024) = plane{3}.anatomy(:,:,select_trial); all_ROI(1:512,513:1024) = squeeze(plane{3}.ROI_map(select_trial,:,:));
@@ -54,30 +54,191 @@ akZoom_PR();
 set(gcf, 'WindowKeyPressFcn', {@OB_morphing_selectROI_9x,parameters});
 
 
-% trial
-tracesX = [];
-for trx = 1:13
-    x_length = size(plane{1}.timetraces{7},2);
-    traces = [];
-    for k = 1:4
-        temp = plane{k}.timetraces{trx}(:,1:x_length);
-        temp0 = plane{k}.timetraces{8}(:,1:x_length);
-        idx = find(~isnan(sum(temp0)) & sum(temp0) ~= 0);
-        traces = [traces, temp(:,idx)];
-    end
-figure(2)
-    subplot(4,4,trx), imagesc((1:size(traces,1))/7.5+50/7.5,[],traces',[-40 400]);
-%     subplot(4,6,trx*2),imagesc(corr(traces'));
-    
-figure(4)
-    trial_timepoints = size(parameters.plane{1}.timetraces{trx},1);
-    trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(trx)},1));
-    subplot(4,4,trx),  h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,2); 0],'r');
-    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
-    h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,3); 0],'b');
-    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+%% discard non-responsive cells
+% 2 = super
+% 1 = non-responsive
+% 4 = intermediate or little informative about stimulus identity
+clear clusterK
+for kk = 1:4
+    clear clusterX
+    clusterX = [];
+    global clusterX
+    for i = 1:size(plane{kk}.timetraces_raw{1},2)
+        plane_nb = kk;
+        neuron_nb = i;
+        handle1 = figure(2198);
+        nb_y = 4;
+        nb_x = 8;
+        for k = 1:parameters.nb_trials
+            % plot paradigm
+            row_pos = floor(k/nb_x-0.001);
+            trial_timepoints = size(parameters.plane{plane_nb}.timetraces{k},1);
+            trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(k)},1));
+            ax(k) = subplot(nb_y,nb_x,k + row_pos*nb_x);
+            h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(k)}(1:10:trial_timepoints2,2); 0],'r');
+            set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
+            h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(k)}(1:10:trial_timepoints2,3); 0],'b');
+            set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+            axis([0 trial_timepoints/7.5 0 3])
+            plot((1:trial_timepoints)/7.5+50/7.5,smooth(parameters.plane{plane_nb}.timetraces{k}(1:trial_timepoints,neuron_nb),parameters.smoothing)/70,'k');
+            hold off;
 
-   
+            % plot ROIs / neuron anatomy
+            windowsize = 30;
+            ROIX = squeeze(parameters.plane{plane_nb}.ROI_map(1,:,:));
+            [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
+            xxx = max(1,x-windowsize):min(512,x+windowsize); yyy = max(1,y-windowsize):min(477,y+windowsize);
+            ax(k+2*parameters.nb_trials) = subplot(nb_y,nb_x,k+ (row_pos)*nb_x+nb_x); imagesc(parameters.plane{plane_nb}.anatomy(xxx,yyy,k),[-30 70]); colormap(gray)
+            title(parameters.FileNames(k,:),'Interpreter','None');
+        end
+        set(gcf, 'units','normalized','Position',[0.1 0.1 0.55 0.620]);
+        set(gcf, 'WindowKeyPressFcn', {@chooseCluster,i,handle1});
+        waitfor(gcf);
+    end
+    clusterK{kk} = clusterX;
 end
+for k = 1:4
+    clusterK{k}((size(plane{k}.timetraces_raw{1},2)+1):end) = [];
+end
+save('clusterK.mat','clusterK')
+
+
+
+%% show all responses for each trial, clustered automatically using a reference trial
+reference_trial = 5;
+tracesX = [];
+for trx = 1:size(plane{1}.anatomy,3)
+    traces = [];
+    traces0 = [];
+    numbers = [];
+    qualitycheck = [];
+    for k = 1:4
+        x_length = size(plane{k}.timetraces_raw{reference_trial},2);
+        temp = plane{k}.timetraces{trx}(:,1:x_length);
+        temp0 = plane{k}.timetraces{reference_trial}(:,1:x_length);
+        traces = [traces, temp];
+        retro_ix = [k*ones(x_length,1)'; 1:x_length];
+        numbers = [numbers, retro_ix];
+        qualitycheck = [qualitycheck, clusterK{k}];
+        traces0 = [traces0, temp0];
+    end
+%     idx = find(~isnan(sum(traces0)) & sum(traces0) ~= 0);
+    idx = find(qualitycheck == 2);
+    nb_clusters = 5;
+    [~,XI,IX] = cluster_traces(traces0(:,idx),nb_clusters);
+    traces_ordered = traces(:,idx(IX));
+
+    tracesX = [tracesX;traces_ordered];
+    
+    figure(2);
+    subplot(4,4,trx), imagesc((1:size(traces_ordered,1))/7.5+50/7.5,[],traces_ordered',[-40 400]);
+
+    figure(5); 
+       subplot(4,4,trx),imagesc(corr(traces_ordered));
+
+    figure(4)
+        trial_timepoints = size(parameters.plane{1}.timetraces{trx},1);
+        trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(trx)},1));
+        subplot(4,4,trx),  h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,2); 0],'r');
+        set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
+        h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[parameters.pdgLUT{parameters.paradigms(trx)}(1:10:trial_timepoints2,3); 0],'b');
+        set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+
+end
+
+
+
+%% pool and select interesting trials; plot correlations of state, maximum projection
+% for each state (1D projection of the 2D corr matrix of states)
+
+nb_frames = zeros(numel( plane{1}.timetraces),1);
+for i = 1:numel(nb_frames)
+    nb_frames(i) = size(plane{1}.timetraces{i},1);
+end
+
+test_trial = 13;
+
+template_trials = [1 2 3 4];
+template_windows = nb_frames(template_trials);
+trial_window = nb_frames(test_trial);
+
+tracesZ = [];
+for k = 1:numel(template_trials)
+    tracesZ = [tracesZ; tracesX([(1:nb_frames(template_trials(k))) + sum(nb_frames(1:(template_trials(k)-1)))],:)];
+end
+X = zeros(size(tracesX([(1:nb_frames(test_trial(1))) + sum(nb_frames(1:(test_trial-1)))],:)));
+for k = 1:numel(test_trial)
+    X = X + tracesX([(1:nb_frames(test_trial(k))) + sum(nb_frames(1:(test_trial(k)-1)))],:);
+end
+tracesZ = [tracesZ; X/numel(test_trial)];
+
+% normalization, if desired
+tracesY = tracesZ;
+for j = 1:size(tracesY,2)
+    tracesY(:,j) = (tracesY(:,j) - mean(tracesY(:,j)))/std(tracesY(:,j));
+end
+idxs = find(~isnan(sum(tracesY)));
+tracesY = tracesY(:,idxs);
+
+
+% use a short timetrace instead of instantaneous values; jj = 4 corresponds
+% to a window of 9 frames, i.e., 1.2 sec
+for jj = 4;% 10:50
+    delayedTraces = tracesY';
+    for k = 2:2:jj*2
+        delayedTraces = [delayedTraces; circshift(tracesY',[k/2 k/2]); circshift(tracesY',[-k/2 -k/2]) ];
+    end
+
+    big_corr = corr(delayedTraces);
+
+    % allin creates a sparse matrix that shows that maximum correlation
+    % value in time
+    small_corr = big_corr(1:sum(template_windows),(sum(template_windows)+1):end);
+    allin = zeros(size(small_corr));
+    for i = 1:size(small_corr,2)
+        [max1(i),ix1] = max(small_corr(1:sum(template_windows(1)),i));
+        [max2(i),ix2] = max(small_corr( (sum(template_windows(1))+1):sum(template_windows(1:2)) ,i));
+        [max3(i),ix3] = max(small_corr( (sum(template_windows(1:2))+1):sum(template_windows(1:3)) ,i));
+        [max4(i),ix4] = max(small_corr( (sum(template_windows(1:3))+1):sum(template_windows(1:4)),i));
+        allin(1,i) = 1;
+    end
+    figure(20+test_trial(1)); 
+    subplot(2,1,1);
+    plot((1:numel(max1))/7.5+50/7.5-1.5,max1,'r'); hold on; % 1.5 sec is the delay between pump switch and odor arrival, empirically found for this experiment
+    plot((1:numel(max1))/7.5+50/7.5-1.5,max2,'b');
+    plot((1:numel(max1))/7.5+50/7.5-1.5,max3,'k');
+    plot((1:numel(max1))/7.5+50/7.5-1.5,max4,'m');
+    xlabel('time [sec]'); ylabel('Correlation value [0 1]')
+    kkk = test_trial(1);
+    axis([5.2 trial_timepoints/7.5 0 1]);  grid on
+    subplot(2,1,2);
+    trial_timepoints = size(parameters.plane{1}.timetraces{kkk},1);
+    trial_timepoints2 = min(floor(trial_timepoints/7.5*100),size(parameters.pdgLUT{parameters.paradigms(kkk)},1));
+    
+    h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[0.3*parameters.pdgLUT{parameters.paradigms(kkk)}(1:10:trial_timepoints2,2); 0],'r');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
+    h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[0.3*parameters.pdgLUT{parameters.paradigms(kkk)}(1:10:trial_timepoints2,3); 0],'b');
+    set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
+    axis([5.2 trial_timepoints/7.5 0 1])
+    hold off; grid on; xlabel('time [sec]'); ylabel('Correlation value [0 1]')
+    
+end
+
+% figure(9), imagesc(conv2(allin',[1 1 1; 1 1 1; 1 1 1],'same')); colormap(gray)
+% figure(10), imagesc(small_corr'); colormap(gray)
+
+
+%% show matrix of correlation of states
+figure(7549), imagesc((0:4206)/7.5,(0:4206)/7.5,corr(tracesY'));
+xlabel('time [sec]'); ylabel('time [sec]'); axis equal; axis([0 4206/7.5 0 4206/7.5]);
+
+
+
+
+
+
+
+
+
 
 
