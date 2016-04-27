@@ -1,13 +1,13 @@
 
 cd('M:\rupppete\electrophysiology2016\');
 
-FileList = dir('*AAAE*.xsg');
+FileList = dir('*.xsg');
 try; close 1; end
 offset = 0;
 suppress_hum = 1;
 cmap = lines(numel(FileList));
 counter = 1;
-for i = [1:3]   %1:numel(FileList)
+for i = 1:numel(FileList)
     load(FileList(i).name,'-mat');
     A = data.ephys.trace_1;
     A2 = A;
