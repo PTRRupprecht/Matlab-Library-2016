@@ -251,9 +251,9 @@ tracesZ((size(tracesZ,1)+1):(size(tracesZ,1)+851),:) = mean(cat(3,tracesX((3607:
 
 % normalization, if desired
 tracesY = tracesZ;
-for j = 1:size(tracesY,2)
-    tracesY(:,j) = (tracesY(:,j) - mean(tracesY(:,j)))/std(tracesY(:,j));
-end
+% for j = 1:size(tracesY,2)
+%     tracesY(:,j) = (tracesY(:,j) - mean(tracesY(:,j)))/std(tracesY(:,j));
+% end
 % use a short timetrace instead of instantaneous values; jj = 4 corresponds
 % to a window of 9 frames, i.e., 1.2 sec
 for jj = 4;% 10:50
@@ -273,9 +273,9 @@ for jj = 4;% 10:50
         [max2(i),ix2] = max(small_corr(552:1102,i));
         [max3(i),ix3] = max(small_corr(1103:1803,i));
         [max4(i),ix4] = max(small_corr(1804:2504,i));
-        allin(ix,i) = 1;
+%         allin(ix,i) = 1;
     end
-    figure(20); 
+    figure(24); 
     subplot(2,2,1);
     plot((1:numel(max1))/7.5+50/7.5-1.5,max1,'r');hold on; % 1.5 sec is the delay between pump switch and odor arrival, empirically found for this experiment
     plot((1:numel(max1))/7.5+50/7.5-1.5,max2,'b');
@@ -310,12 +310,95 @@ for jj = 4;% 10:50
     set(h, 'EdgeColor','none', 'FaceAlpha', 0.4); hold on;
     h = fill([(1:10:trial_timepoints2)/100, trial_timepoints2/100],[0.3*parameters.pdgLUT{parameters.paradigms(kkk)}(1:10:trial_timepoints2,3); 0],'b');
     set(h, 'EdgeColor','none', 'FaceAlpha', 0.4);
-    axis([5.2 trial_timepoints/7.5 0 1])
+    axis([5.2 trial_timepoints/7.5 0.3 1])
     hold off; grid on; xlabel('time [sec]'); ylabel('Correlation value [0 1]')
 end
 
 % figure(9), imagesc(conv2(allin',[1 1 1; 1 1 1; 1 1 1],'same')); colormap(gray)
 % figure(10), imagesc(small_corr'); colormap(gray)
+
+
+
+
+
+
+%% pool and select interesting trials; plot correlations of state, maximum projection, Rainer's idea
+% for each state (1D projection of the 2D corr matrix of states)
+
+nb_frames = zeros(numel( plane{1}.timetraces),1);
+for i = 1:numel(nb_frames)
+    nb_frames(i) = size(plane{1}.timetraces{i},1);
+end
+
+test_trialx = [7 8];
+
+for jjj = 1:numel(test_trialx)
+    test_trial = test_trialx(jjj);
+    
+    template_trials = [3 4 5 6];
+    template_windows = nb_frames(template_trials);
+    trial_window = nb_frames(test_trial);
+
+    tracesZ = [];
+    for k = 1:numel(template_trials)
+        tracesZ = [tracesZ; tracesX([(1:nb_frames(template_trials(k))) + sum(nb_frames(1:(template_trials(k)-1)))],:)];
+    end
+    X = zeros(size(tracesX([(1:nb_frames(test_trial(1))) + sum(nb_frames(1:(test_trial-1)))],:)));
+    for k = 1:numel(test_trial)
+        X = X + tracesX([(1:nb_frames(test_trial(k))) + sum(nb_frames(1:(test_trial(k)-1)))],:);
+    end
+    tracesZ = [tracesZ; X/numel(test_trial)];
+
+    % normalization, if desired
+    tracesY = tracesZ;
+    if 0
+        for j = 1:size(tracesY,2)
+            tracesY(:,j) = (tracesY(:,j) - mean(tracesY(:,j)))/std(tracesY(:,j));
+        end
+    end
+    idxs = find(~isnan(sum(tracesY)));
+    tracesY = tracesY(:,idxs);
+
+    % use a short timetrace instead of instantaneous values; jj = 4 corresponds
+    % to a window of 9 frames, i.e., 1.2 sec
+    delayedTraces = tracesY';
+    %     for k = 2:2:jj*2
+    %         delayedTraces = [delayedTraces; circshift(tracesY',[k/2 k/2]); circshift(tracesY',[-k/2 -k/2]) ];
+    %     end
+
+    % figure; hold on; plot(mean(delayedTraces),'g');  plot(std(delayedTraces)); 
+    % [x, ~] = ginput(16);
+    % x_selectors = round(x);
+    % save('x_selectors.mat','x_selectors')
+
+    big_corr = corr(delayedTraces);
+
+    oxy{1} = x_selectors(1:4); % odor 1, block
+    oxy{2} = x_selectors(5:8); % odor 2, block
+    oxy{3} = x_selectors(9:12); % odor 1, gradient
+    oxy{4} = x_selectors(13:16); % odor 2, gradient
+
+    for j = 1:numel(oxy)
+        start(j,:) = mean(big_corr((sum(template_windows)+1):end,oxy{j}(1):oxy{j}(2)),2);
+        later(j,:) = mean(big_corr((sum(template_windows)+1):end,oxy{j}(2):oxy{j}(3)),2);
+        off(j,:) = mean(big_corr((sum(template_windows)+1):end,oxy{j}(3):oxy{j}(4)),2);
+    end
+
+    % red=Phe, blue=Trp, black=Phe_v, magenta=Trp_v
+    ccmap = [       1         0    0
+        0         0         1
+             0    0         0
+             1         0    1];
+    timet = (1:size(start,2))/7.5+50/7.5-1.5;
+    figure(78+test_trialx(1)),
+    subplot(1,3,1); hold on; for k = 1:4; plot(timet,smooth(start(k,:),5),'Color',ccmap(k,:)); end;
+    xlabel('time [sec]'); ylabel('Correlation value [0 1]'); hold off; axis([min(timet) max(timet) -0.5 1])
+    subplot(1,3,2); hold on; for k = 1:4; plot(timet,smooth(later(k,:),5),'Color',ccmap(k,:)); end;
+    xlabel('time [sec]'); ylabel('Correlation value [0 1]'); hold off; axis([min(timet) max(timet) -0.5 1])
+    subplot(1,3,3); hold on; for k = 1:4; plot(timet,smooth(off(k,:),5),'Color',ccmap(k,:)); end;
+    xlabel('time [sec]'); ylabel('Correlation value [0 1]'); hold off; axis([min(timet) max(timet) -0.5 1])
+end
+
 
 
 %% show matrix of correlation of states
