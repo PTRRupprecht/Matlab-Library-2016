@@ -11,7 +11,7 @@ for i = 1:numel(FileList)
     load(FileList(i).name,'-mat');
     A = data.ephys.trace_1;
     A2 = A;
-    if strcmp(header.ephys.ephys.amplifierSettings.Amp_700B_1.mode,'I-Clamp') % subtract 50 Hz noise
+    if 1 %strcmp(header.ephys.ephys.amplifierSettings.Amp_700B_1.mode,'I-Clamp') % subtract 50 Hz noise
         window = 10000; % 2 sec
         for kk = 1:numel(A)/window;
             X = A((1:window) + (kk-1)*window);
