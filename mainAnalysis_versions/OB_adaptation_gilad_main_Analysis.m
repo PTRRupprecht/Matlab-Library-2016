@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_odor1Arg_0*_.tif');
+FileList_0 = dir('Fish2_lessdim_odor1_Arg_0*.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
@@ -18,14 +18,14 @@ end
 %% read raw data from hard disk
 binning = 1;
 nb_planes = 4;
+meta.numberframes = floor(meta.numberframes/nb_planes)*nb_planes;
 meta.framerate = meta.framerate/binning;
 meta.framerate = meta.framerate/nb_planes;
 nb_frames_total = sum(floor(meta.numberframes/binning));
 
 clear movie movie_p counter_planes
-useful_range_start = 200;
 nb_frames_perplane = floor(nb_frames_total/nb_planes);
-for pp = 4 % which plane do you want to choose right now?
+for pp = 1 % which plane do you want to choose right now?
     counter_planes{pp} = 0;
     movie_p{pp} = zeros(meta.height,meta.width,nb_frames_perplane);
     for kkk = 1:numel(FileList)
@@ -45,7 +45,7 @@ end
 
 %% subtract preamp ringing
 template_window = [];
-for k = 1:numel(FileList); template_window = [template_window; [1:25]'+400*(k-1)]; end
+for k = 1:numel(FileList); template_window = [template_window; [1:25]'+sum(meta.numberframes(1:(k-1)))/nb_planes]; end
 template = mean(movie_p{pp}(:,:,template_window),3);
 template_odd = mean(template(1:2:end,:),1);
 template_even = mean(template(2:2:end,:),1);
@@ -59,18 +59,18 @@ for k = 1:size(movie_p{pp},3)
 end
 
 % unwarp full stack
-movie_p{pp} = unwarp_precision(movie_p{pp});
+% movie_p{pp} = unwarp_precision(movie_p{pp});
 
 %% AVG images
 clear AVG
-for k = 1:numel(FileList)
-    AVG(:,:,k) = mean(movie_p{pp}(:,:,(51:400)+(k-1)*400),3);
-    result_conv =fftshift(real(ifft2(conj(fft2(AVG(:,:,k))).*fft2(AVG(:,:,1)))));
+for trial_nb = 1:numel(FileList)
+    AVG(:,:,trial_nb) = mean(movie_p{pp}(:,:,(51:meta.numberframes(trial_nb)/nb_planes)+sum(meta.numberframes(1:(trial_nb-1)))/nb_planes),3);
+    result_conv =fftshift(real(ifft2(conj(fft2(AVG(:,:,trial_nb))).*fft2(AVG(:,:,1)))));
     [y,x] = find(result_conv==max(result_conv(:))); %Find the 255 peak
     result_conv =fftshift(real(ifft2(conj(fft2(AVG(:,:,1))).*fft2(AVG(:,:,1)))));
     [y0,x0] = find(result_conv==max(result_conv(:))); %Find the 255 peak
-    offsety(k) = y-y0;
-    offsetx(k) = x-x0;
+    offsety(trial_nb) =  y-y0;
+    offsetx(trial_nb) =  x-x0;
 end
 
 
@@ -78,7 +78,7 @@ end
 % odor switches at frame 100
 figure(854); hold on;
 for trial_nb = 1:numel(FileList)
-    movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
+    movie_trial = circshift(movie_p{pp}(:,:,(50:meta.numberframes(trial_nb)/nb_planes)+sum(meta.numberframes(1:(trial_nb-1)))/nb_planes),[offsety(trial_nb) offsetx(trial_nb) 0]);
     AVG_movie(:,:,trial_nb) = mean(movie_trial,3);
 
     % calculate activity maps
@@ -102,7 +102,9 @@ ROI_map_input = zeros(size(AVG_movie(:,:,1)));
 trial_nb = 1;
 offset = -25;
 movie_trial = circshift(movie_p{pp}(:,:,(50:400)+(trial_nb-1)*400),[offsety(trial_nb) offsetx(trial_nb) 0]);
-df_scale = [-20 100];
+df_scale = [-20 100];save(strcat('Extracted_Data_fish1_18-05-16_Trp.mat'),'plane');
+
+
 AVG_Z = AVG_movie(:,:,trial_nb);
 AVG_Z(AVG_Z>80) = 80;
 
@@ -132,5 +134,6 @@ plane{pp}.meta = meta;
 plane{pp}.anatomy = AVG_movie;
 
 
-save(strcat('Extracted_Data_fish1_15-03-16_Arg.mat'),'plane');
+
+save(strcat('Extracted_Data_fish1_18-05-16_Trp.mat'),'plane');
 
