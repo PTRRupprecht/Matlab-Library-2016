@@ -1,32 +1,26 @@
 
 
-FileX = dir('16*morphing*Pdgm*');
+jj = 1;
 clear AVG
-for jj = 1:numel(FileX)
-    cd(FileX(jj).name);
-    FileZ = dir('Fish1_*.tif');
-    for kkk = 1:numel(FileZ)
-        jj
-        kkk
-        L{kkk} = imfinfo(FileZ(kkk).name);
-        clear X
-    	X = read_movieLX(FileZ(kkk).name,512,512,numel(L{kkk}),1,1,L{kkk},1);
-        for pp = 1:4
-            AVG(:,:,pp,kkk,jj) = mean(X(:,:,(200:4:end-5)+pp),3);
-        end
+FileZ = dir('Fish1_FullOB*.tif');
+for kkk = 1:numel(FileZ)
+    jj
+    kkk
+    L{kkk} = imfinfo(FileZ(kkk).name);
+    clear X
+    X = read_movieLX(FileZ(kkk).name,512,512,numel(L{kkk}),1,1,L{kkk},1);
+    for pp = 1:8
+        AVG(:,:,pp,kkk,jj) = mean(X(:,:,(200:8:end-5)+pp),3);
     end
-    cd ..
 end
 
 
-for jj = 1:2 %:numel(FileX)
-    cd(FileX(jj).name);
-    for pp = 1:4
-        filename = strcat('AVGs_plane_Fish1_',num2str(pp),'.tif');
-        imwrite(uint16(squeeze(AVG(:,:,pp,1,jj))),filename);
-        for kkk = 2:size(AVG,4)
-            imwrite(uint16(squeeze(AVG(:,:,pp,kkk,jj))),filename,'WriteMode','append');
-        end
+
+
+for pp = 1:8
+    filename = strcat('AVGs_plane_Fish1_FullOB_',num2str(pp),'.tif');
+    imwrite(uint16(squeeze(AVG(:,:,pp,1,jj))),filename);
+    for kkk = 2:size(AVG,4)
+        imwrite(uint16(squeeze(AVG(:,:,pp,kkk,jj))),filename,'WriteMode','append');
     end
-    cd ..
 end

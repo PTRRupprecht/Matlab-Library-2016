@@ -1,9 +1,9 @@
 
 
 
-MatFileList = dir('Extracted*.mat');
+MatFileList = dir('Extracted_Data_fish1_19-05-16_Trp*.mat');
 % MatFileList = dir('Extracted_Data_fish1_03-03-16_sag_Arg*.mat');
-% MatFileList = dir('Fish1*.mat');
+MatFileList = dir('Fish1*.mat');
 for yy = 1:numel(MatFileList)
     load(MatFileList(yy).name);
     clear fluoXT fluoX
@@ -42,7 +42,7 @@ for yy = 1:numel(MatFileList)
     end
 end   
 
-figure(12319); plane_nb = 1; neuron_nb = 2;
+figure(12319); plane_nb = 3; neuron_nb = 1;
 windowsize = 30;
 ROIX = squeeze(plane{plane_nb}.ROI_map(1,:,:));
 [x,y] = find(ROIX == neuron_nb); x = round(mean(x)); y = round(mean(y));
@@ -59,10 +59,10 @@ for zz = 1:size(plane{plane_nb}.timetraces_raw,3); subplot(4,4,1+zz); imagesc(pl
 
 % discard neurons
 
-p_ix = [2 2]; % plane_nb
-n_ix = [5 6]; % trial_nb
+p_ix = [2]; % plane_nb
+n_ix = [6]; % trial_nb
 
-t_ix = []; % trials to discard
+t_ix = [9 10]; % trials to discard
 
 planeX = plane;
 for j = 1:numel(p_ix)
@@ -84,7 +84,7 @@ for k = 1:4
 end
 plane = planeX;
 
-save('Fish1_18_05_Trp.mat','plane')
+save('Fish1_19_05_His.mat','plane')
 
 
 

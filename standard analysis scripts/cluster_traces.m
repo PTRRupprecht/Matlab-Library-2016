@@ -10,6 +10,7 @@ function [traces_ordered,XI,IX] = cluster_traces(traces,nb_clusters)
     Z = linkage(dissimilarity,'complete');
     if nb_clusters == 0
         IX = optimalleaforder(Z,round((dissimilarity-eye(size(dissimilarity)))*1000)/1000);
+        XI = ones(size(IX));
     else
         % decide on a cutoff
         cutoff = 10;
