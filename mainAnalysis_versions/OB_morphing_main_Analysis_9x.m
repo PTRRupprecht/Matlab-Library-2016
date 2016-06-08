@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_*.tif');
+FileList_0 = dir('Fish1_OB2_*.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
@@ -105,7 +105,7 @@ akZoom('all_linked')
 
 %% preliminary ROIs got from test trials
 ROI_map_input = zeros(size(AVG_movie(:,:,1)));
-trial_nb = 6; 
+trial_nb = 12; 
 offset = -25;
 movie_trial = circshift(movie_p{pp}(:,:,(50:meta.numberframes(trial_nb)/nb_planes)+sum(meta.numberframes(1:(trial_nb-1)))/nb_planes),[offsety(trial_nb) offsetx(trial_nb) 0]);
 df_scale = [-20 100];
@@ -138,5 +138,5 @@ plane{pp}.meta = meta;
 plane{pp}.anatomy = AVG_movie;
 
 
-save(strcat('Extracted_Data_fish1D19-04-16_morph_Trp_Phe.mat'),'plane');
+save(strcat('Extracted_Data_fish1_05-06-16_tuning_OB2.mat'),'plane');
 
