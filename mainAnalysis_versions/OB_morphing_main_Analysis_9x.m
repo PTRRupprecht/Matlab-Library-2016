@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_OB2_*.tif');
+FileList_0 = dir('Fish1_OB2_pos3*.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);
@@ -98,14 +98,14 @@ for trial_nb = 1:numel(FileList)
     localCorrelations(:,:,trial_nb) = zeros(size(DF_reponse(:,:,trial_nb)));
 %     localCorrelations(:,:,trial_nb) = localCorrelationMap(movie_trial,tilesize);
 
-    subplot(2,ceil(numel(FileList)/2),trial_nb); imagesc(DF_reponse(:,:,trial_nb),[-0.5 2])
+    subplot(2,ceil(numel(FileList)/2),trial_nb); imagesc(DF_master(:,:,trial_nb),[-0.5 2])
 %     subplot(2,ceil(numel(FileList)/2),trial_nb); imagesc(AVG_movie(:,:,trial_nb),[-30 70]); colormap(gray)
 end
 akZoom('all_linked')
 
 %% preliminary ROIs got from test trials
 ROI_map_input = zeros(size(AVG_movie(:,:,1)));
-trial_nb = 12; 
+trial_nb = 5; 
 offset = -25;
 movie_trial = circshift(movie_p{pp}(:,:,(50:meta.numberframes(trial_nb)/nb_planes)+sum(meta.numberframes(1:(trial_nb-1)))/nb_planes),[offsety(trial_nb) offsetx(trial_nb) 0]);
 df_scale = [-20 100];
@@ -138,5 +138,5 @@ plane{pp}.meta = meta;
 plane{pp}.anatomy = AVG_movie;
 
 
-save(strcat('Extracted_Data_fish1_05-06-16_tuning_OB2.mat'),'plane');
+save(strcat('Extracted_Data_fish1_08-06-16_tuning_OB2_pos3.mat'),'plane');
 
