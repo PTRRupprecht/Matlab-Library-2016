@@ -3,7 +3,7 @@ global clut2b timetracesX_X ROI_map_X movie_AVG_X
 load clut2b
 
 %% load list of files
-FileList_0 = dir('Fish1_odor2His_0*.tif');
+FileList_0 = dir('Fish1_OB1_pos2*.tif');
 FileList = FileList_0;
 clear meta
 [A,result,meta.framerate,meta.zstep,meta.zoom,meta.motorpositions,meta.scalingfactors] = read_metadata_function(FileList_0(1).name);

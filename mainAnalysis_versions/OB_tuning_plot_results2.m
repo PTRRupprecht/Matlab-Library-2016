@@ -1,7 +1,7 @@
 
 
 
-MatFileList = dir('Extracted_Data_fish1_05-06-16_tuning_OB2*.mat');
+MatFileList = dir('Extracted_Data_*.mat');
 for yy = 1:numel(MatFileList)
     load(MatFileList(yy).name);
     clear fluoXT fluoX
@@ -29,7 +29,7 @@ for yy = 1:numel(MatFileList)
         
     figure(760);
     for trailx = 1:numel(plane{1}.timetraces)
-        subplot(4,4,trailx); imagesc(fluoXT{trailx}')
+        subplot(2,3,trailx); imagesc(fluoXT{trailx}')
     end
     
     
@@ -38,14 +38,14 @@ for yy = 1:numel(MatFileList)
     
     select_points = [1 2 13 14 15 16];
     select_points = [1 2 4 6 7 9 10 12 13:16];
-    select_points = [ 2  6  9  12 14 16];
+    select_points = [1:6];
     select_times = [];
     for j = 1:numel(select_points); select_times = [select_times, (1+sum(timepoints(1:select_points(j)))-timepoints(select_points(j))):sum(timepoints(1:select_points(j)))]; end
     
-    
-    figure(327+yy);
+    figure(9891), hold on; for k = 1:6; plot(nanmean(fluoXT{k},2)); end
+    figure(127+yy);
     subplot(1,1,1); imagesc(corrMap(select_times,select_times)); axis equal; %axis([0  size(corrMap,1) 0 size(corrMap,1)])
-
+end
     
     for kk = 1:numel(select_points)
         for ii = 1:numel(select_points)
