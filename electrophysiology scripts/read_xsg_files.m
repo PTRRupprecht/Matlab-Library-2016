@@ -3,7 +3,8 @@ cd('M:\rupppete\electrophysiology2016\');
 
 FileList = dir('*.xsg');
 try; close 1; end
-offset = 0;
+offsetV = 0;
+offsetI = 0;
 suppress_hum = 1;
 cmap = lines(numel(FileList));
 counter = 1;
@@ -11,7 +12,7 @@ for i = 1:numel(FileList)
     load(FileList(i).name,'-mat');
     A = data.ephys.trace_1;
     A2 = A;
-    if 1 %strcmp(header.ephys.ephys.amplifierSettings.Amp_700B_1.mode,'I-Clamp') % subtract 50 Hz noise
+    if 1 % subtract 50 Hz noise
         window = 10000; % 2 sec
         for kk = 1:numel(A)/window;
             X = A((1:window) + (kk-1)*window);
@@ -23,8 +24,13 @@ for i = 1:numel(FileList)
     timet = (1:numel(A))/samplerate;%*1000; % ms
     trace = smooth(A,10);
     counter = counter + 1;
-    figure(1), hold on; plot(timet(1:10:end), trace(1:10:end)+offset,'Color',cmap(i,:))
-    offset = offset + max(trace)-min(trace);
+    if ~strcmp(header.ephys.ephys.amplifierSettings.Amp_700B_1.mode,'I-Clamp')
+        figure(41), hold on; plot(timet(1:10:end), trace(1:10:end)+offsetV,'Color',cmap(i,:))
+        offsetV = offsetV + max(trace)-min(trace);
+    else
+        figure(51), hold on; plot(timet(1:10:end), trace(1:10:end)+offsetI,'Color',cmap(i,:))
+        offsetI = offsetI + max(trace)-min(trace);
+    end
     pause(0.1);
 end
 
