@@ -1,8 +1,8 @@
 
 
-
+close all
 %% show electrophysiological recordings
-FileList = dir('*14*.xsg');
+FileList = dir('*13*.xsg');
 try; close 41; close 51; end
 offsetV = 0;
 offsetI = 0;
@@ -27,46 +27,53 @@ for i = 1
     timet = (1:numel(A))/samplerate;%*1000; % ms
    
     
-    AA = zeros(1500,4);
-    for k = 1:4
-        for j = 1:100
-            AA(:,k) = A((1:1500)+(j-1)*1500 + 150000*(k-1));
-        end
-        AA(:,k) = AA(:,k)/j;
-        AA(:,k) = AA(:,k) - mean(AA(1:240,k));
+    transients = zeros(1500,400);
+    for k = 1:400
+        transients(:,k) = A((1:1500)+(k-1)*1500);
     end
-    figure, plot(smooth(-AA(:,3)+AA(:,4)/3.5,7))
-    hold on; plot(smooth(-AA(:,1)+AA(:,2)/7,7),'k')
     
-    FF(:,i-21) = AA - mean(AA);
-    
-    % end
-    %     
-    % WW = mean(FF(:,1:2),2); WW2 = mean(FF(:,3:4),2)/5; WW3 = mean(FF(:,5:6),2)/8;
-    % WW = smooth(WW,5);
-    % WW2 = smooth(WW2,5);
-    % WW3 = smooth(WW3,5);
-    % figure, hold on; plot(WW); plot(WW2+2,'r'); plot(WW3+4,'k')
-    % hold on; plot(WW2-WW+6,'r'); plot(WW3-WW+8,'k')
-
- 
- 
-    trace = smooth(AA,5);
-    figure(431), subplot(4,4,i-20); plot(AA)
-    timet = (1:numel(AA))/samplerate;%*1000; % ms
-    
-    counter = counter + 1;
-    if ~strcmp(header.ephys.ephys.amplifierSettings.Amp_700B_1.mode,'I-Clamp')
-        figure(41), hold on; plot(timet(1:10:end), trace(1:10:end)+offsetV,'Color',cmap(i,:))
-        text(timet(end)+1,median(trace(1:10:end)+offsetV),num2str(i),'FontSize',12)
-        offsetV = offsetV + max(trace)-min(trace);
-        VCindex = [VCindex; i];
-    else
-        figure(51), hold on; plot(timet(1:10:end), trace(1:10:end)+offsetI,'Color',cmap(i,:))
-        text(timet(end),median(trace(1:10:end)+offsetI),num2str(i),'FontSize',12)
-        offsetI = offsetI + max(trace)-min(trace);
-        CCindex = [CCindex; i];
-    end
 end
-VCindex = VCindex'
-CCindex = CCindex'
+
+template10 = mean(transients(:,1:100),2) - mean(mean(transients(1:240,1:100),2));
+template70 = mean(transients(:,101:200),2) - mean(mean(transients(1:240,101:200),2));
+template10x = mean(transients(:,201:300),2) - mean(mean(transients(1:240,201:300),2));
+template35 = mean(transients(:,301:400),2) - mean(mean(transients(1:240,301:400),2));
+
+% raw data
+figure(51), plot(template10); hold on; plot(template10x);
+plot(template70,'r'); plot(template35,'k')
+% corrected data
+figure(52), plot(template70-template10*7,'r'); hold on; plot(template35 - template10x*3.5,'k');
+
+% XXX
+timecourse2D = transients(:,101:200) - 0*repmat(mean(transients(:,1:100),2)*7,[1 100]);
+figure(63);  hold on; cmap = jet(100);
+for k = 1:100
+    plot(smooth(timecourse2D(:,k),5),'Color',cmap(k,:));
+end
+figure(64); plot(mean(transients(1000:1200,:),1))
+
+
+% corrected data, timecourse - +70 mV
+timecourse2D = transients(:,101:200) - repmat(mean(transients(:,1:100),2)*7,[1 100]);
+figure(53); subplot(1,2,1); hold on; cmap = jet(100);
+for k = 1:100
+    plot(smooth(timecourse2D(:,k),1),'Color',cmap(k,:));
+end
+subplot(1,2,2); imagesc(timecourse2D(250:1250,:))
+% corrected data, timecourse - +35 mV
+timecourse2D = transients(:,301:400) - repmat(mean(transients(:,201:300),2)*3.5,[1 100]);
+figure(54); subplot(1,2,1); hold on; cmap = jet(100);
+for k = 1:100
+    plot(smooth(timecourse2D(:,k),5),'Color',cmap(k,:));
+end
+subplot(1,2,2); imagesc(timecourse2D(250:1250,:))
+% corrected data, timecourse - 0 mV
+timecourse2D = transients(:,201:300) - repmat(mean(transients(:,001:100),2),[1 100]);
+figure(55); subplot(1,2,1); hold on; cmap = jet(100);
+for k = 1:100
+    plot(smooth(timecourse2D(:,k),5),'Color',cmap(k,:));
+end
+subplot(1,2,2); imagesc(timecourse2D(250:1250,:))
+
+
