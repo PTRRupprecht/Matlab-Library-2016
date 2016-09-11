@@ -77,3 +77,19 @@ end
 subplot(1,2,2); imagesc(timecourse2D(250:1250,:))
 
 
+%% corrected raw timetrace
+AX = A;
+subtrat = mean(transients(:,1:100),2);
+for k = 1:400
+    if k < 101
+        subtrat2 = subtrat;
+    elseif k < 201
+        subtrat2 = subtrat*7;
+    elseif k < 301
+        subtrat2 = subtrat;
+    else
+        subtrat2 = subtrat*3.5;
+    end
+    AX((251:1750)+(k-1)*1500) =  AX((251:1750)+(k-1)*1500) - subtrat2;
+end
+figure(1), plot((1:numel(AX))/1e4,AX); hold on; plot((1:numel(AX))/1e4,A,'r')
