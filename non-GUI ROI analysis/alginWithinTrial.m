@@ -33,8 +33,10 @@ offsetx_resolved = offsetx;% interp1(1:10:(size(movie,3)-9),offsetx,1:size(movie
 if sum(offsety_resolved) ~=0 || sum(offsetx_resolved) ~=0 
     keyboard
     if 0
-        offsetx_resolved(1:10) = offsetx_resolved(11);
-        offsety_resolved(1:10) = offsety_resolved(11);
+        offsetx_resolved(1:20) = offsetx_resolved(21);
+        offsety_resolved(1:20) = offsety_resolved(21);
+        offsetx_resolved(end-20:end) = offsetx_resolved(end-21);
+        offsety_resolved(end-20:end) = offsety_resolved(end-21);
         offsety_resolved = round(smooth(offsety_resolved,80));
         offsetx_resolved = round(smooth(offsetx_resolved,80));
     end
