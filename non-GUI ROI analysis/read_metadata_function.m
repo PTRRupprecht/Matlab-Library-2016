@@ -35,6 +35,7 @@ snippet{17} = 'scanimage.SI4.acqNumAveragedFrames';
 
 snippet{18} = 'scanimage.SI4.motorPosition';
 snippet{19} = 'scalingFactorAndOffset';
+snippet{20} = 'framerate_precise';
 
 %% read out metadata
 clear result
@@ -58,9 +59,16 @@ try
 catch
     result{19} = A(1).ImageDescription(k + length(snippet{19})+3:end);
 end
+k = strfind( A(1).ImageDescription(1:end),snippet{20});
+try
+    result{20} = A(1).ImageDescription(k + length(snippet{20})+3:k + length(snippet{20}) + 3 + 5);
+catch
+    result{20} = [];
+end
 %% make metadata it easier to process
 
 if result{12}; framerate = min(result{11},result{1}); else framerate = result{1}; end
+if ~isempty(result{20}); framerate = str2double(result{20}); end
 zstep = result{4};
 zoom = result{7};
 motorpositions = result{18};
