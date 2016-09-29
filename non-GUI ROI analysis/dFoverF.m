@@ -24,7 +24,7 @@ DF = mean(movie(:,:,response_window),3);
 % F0 = min(F0Z,[],3);
     
 F0 = mean(movie(:,:,F0_window),3);
-F0 = conv2(F0,fspecial('gaussian',[3 3], 2),'same');
+F0 = conv2(F0,fspecial('gaussian',[3 3], 1),'same');
 DF = (DF - F0)./(F0-offset);
 DF_reponse = conv2(DF,fspecial('gaussian',[3 3], 2),'same');
 if plot1 ~=0; figure(plot1), imagesc(DF_reponse*100,[-5 130]); colormap(jet); axis equal off; end
