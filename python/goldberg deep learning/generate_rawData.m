@@ -57,12 +57,12 @@ save('metaData.mat','Chunk_Counter')
 %% read and play some of the the chunks
 % move to folder with mat files first
 FileList = dir('*.mat');
-figure, hold on;
+figure,
 for i = 1:60
     k = randi(numel(FileList),1);
     F = load(FileList(k).name);
     k = randi(size(F.chunked_song,2),1);
-    ding = F.chunked_song(:,k);
+    ding = double(F.chunked_song(:,k));
     ding = (ding - mean(ding))/std(ding);
     plot(ding+5*i);
     soundsc(ding,44100/7);
