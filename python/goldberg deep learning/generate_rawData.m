@@ -25,12 +25,12 @@ for jj = 3:9 % here, I had 7 folders with different composers
         for k = 1:7
             yy = yy + y((7:7:end)-k+1,:);
         end
-        yy = yy/7;
+        yy = yy/7; 
 
-        % expected number of 10 sec junks
+        % expected number of 10 sec chunks
         num_chunks = floor(size(yy,1)/bitelength)-9;
 
-        % generate junked pieces
+        % generate chunked pieces
         chunked_song = zeros(bitelength*10,num_chunks,'int16');
         for p = 1:num_chunks
             piece = yy((1:bitelength*10)+bitelength*(p-1),1);
