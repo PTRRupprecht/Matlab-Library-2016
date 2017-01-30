@@ -17,14 +17,15 @@ if isempty(linw);
     linw=1;
 end
 if isempty(AbsTickLength);
-    AbsTickLength=0.004;
+    AbsTickLength=0.01;
 end
 
-set(gca,'tickdir','out','fontsize',fontsize);
+set(gca,'tickdir','in','fontsize',fontsize);
 pos=get(gca,'position');
 longaxis=max(pos(3:4));
 tickfactor=AbsTickLength/longaxis;
-set(gca,'ticklength',[tickfactor,0.025],'Box','off','linewidth',linw);
+% set(gca,'ticklength',[tickfactor,0.025],'Box','off','linewidth',linw);
+set(gca,'ticklength',[tickfactor,0.025],'Box','on','linewidth',linw);
 
 
 set(gca,'fontname','Arial');
