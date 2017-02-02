@@ -5,6 +5,8 @@
 % The dataset consists of single trial elements, each associated with a
 % experimental series ('dataset') and an odorant ('odor')
 
+load('OB_tuning_enhanced.mat');
+
 % find out experiments (= unique elements in the dataset)
 for k = 1:numel(dataset1)
     setList{k} = dataset1{k}.dataset;
@@ -62,6 +64,7 @@ for kkk = [1:5 7 9:numel(datasetList)] % discard experiments that do not show od
             counter = counter + 1;
         end
     end
+    nb_neurons(kkk) = size(XX_timetraces(:,indxs,j),2);
     % save everything in a super-structure
     CorrVector{kkk}.X1 = X1;
     CorrVector{kkk}.X2 = X2;
@@ -93,6 +96,90 @@ for kkk = [1:5 7 9:numel(datasetList)] % discard experiments that do not show od
     axis([-10 50 -0.2 1])
 end
 
+
+%% plot correlation matrix of all and everything
+
+
+AllTraces = [];
+for kkk = [5 7 9:numel(datasetList)]
+    timet = (1:size(CorrVector{kkk}.timetraces,1))/CorrVector{kkk}.framerate - CorrVector{kkk}.onset;
+    
+    shiftX = round((CorrVector{kkk}.onset-10)*CorrVector{kkk}.framerate);
+    ttimetraces = circshift(CorrVector{kkk}.timetraces,[-shiftX 0 0]);
+    
+    
+    if kkk < 5
+        ttimetraces(:,:,5:6) = NaN;
+    end
+    clear ttimetracesJ
+    if kkk == 5
+        for j = 1:6
+            ttimetracesJ(:,:,j) = resample(ttimetraces(:,:,j),2,1);
+        end
+    else
+        ttimetracesJ = ttimetraces;
+    end
+
+
+    AllTraces = [AllTraces,ttimetracesJ(1:500,:,:)];
+
+end
+
+% PCA plot
+AllTraces = reshape(permute(AllTraces,[1 3 2]),[500*6 467]);
+ixs = ~isnan(sum(AllTraces(:,:,:)));
+AllTracesY = AllTraces(:,ixs);
+
+[coeff,score,latent] = pca(AllTracesY);
+
+figure, plot(score(:,1:6))
+
+colors = {'r', 'k', 'b', 'r', 'k', 'b'};
+figure, hold on;
+kk = [1 2 3];
+for i = 1:6
+    timepoints = (50:330)+(i-1)*500;
+    plot3(smooth(score(timepoints,kk(1)),3),smooth(score(timepoints,kk(2)),3),smooth(score(timepoints,kk(3)),3),'Color',colors{i});
+end
+
+
+% use AllTraces without the modifications of the last paragraph
+AllTracesX = reshape(AllTraces,[500 467*6]);
+ixs = find(~isnan(sum(sum(AllTracesX(:,:,:)),3)));
+AllTracesX = AllTracesX(:,ixs,:);
+
+
+CorrMatt = corr(squeeze(AllTracesX(:,:))');
+
+[x,y] = find(CorrMatt> 0.58 & CorrMatt < 0.62);
+
+
+txime = ((1:numel(CorrMatt(j,1:end))))/7.5 - 10;
+figure, imagesc(txime,txime,corr(squeeze(AllTracesX(:,:))'),[-0.2 1])
+axis equal; axis([min(txime) max(txime) min(txime) max(txime)]);
+colormap(brewermap(256,'Greys'))
+cmap = jet(55);
+hold on; 
+figure, contourf(txime,txime,CorrMatt,[ -.2 0.8])
+
+
+
+%% plot nice anatomy map
+
+figure(4132),
+for j = 1:12
+    for h = 1:4
+        subplot(4,12,j + 12*(h-1)); imagesc(dataset1{A(j)}.anatomy{h},[-3 45]); % axis equal off;
+        colormap(gray)
+    end
+end
+
+
+
+
+
+
+
 %% average over all correlation vectors (decorrelation / distance measurement)
 
 sameX = [];
@@ -101,7 +188,7 @@ weightD = [];
 weightS = [];
 counterS = 1;
 counterD = 1;
-for k = 1:numel(CorrVector) % go through experiments
+for k = [1:5 7 9:numel(datasetList)] %1:numel(CorrVector) % go through experiments
     clear W % W will be the matrix containing the correlation trace of a trial pair
     if k == 5 % special treatment for recordings with lower framerate
         H = CorrVector{k}.CorrVec;
